@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tracking System</title>
+    <title>Real-Time Location Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         body {
@@ -15,13 +15,10 @@
         h1 {
             color: #333;
         }
-        form {
-            margin: 20px;
-        }
-        input[type="text"], input[type="password"] {
-            padding: 10px;
-            margin: 10px 0;
-            width: 200px;
+        #map {
+            width: 100%;
+            height: 500px;
+            margin-bottom: 20px;
         }
         button {
             background-color: #4CAF50;
@@ -39,42 +36,37 @@
         button:hover {
             background-color: #45a049;
         }
-        #map {
-            width: 100%;
-            height: 500px;
-            margin-top: 20px;
-        }
-        #response {
-            margin-top: 20px;
+        .container {
+            margin: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Live Tracking System</h1>
+    <h1>Real-Time Location Tracker</h1>
 
-    <!-- Form for entering username -->
-    <form id="usernameForm">
-        <label for="username">Enter Username:</label><br>
-        <input type="text" id="username" name="username" required><br>
-        <button type="submit">Start Tracking</button>
-    </form>
+    <!-- Login and Tracking Form -->
+    <div id="login-container" class="container">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Enter username" />
+        <input type="password" id="login-password" placeholder="Enter password" />
+        <button id="login-button">Login</button>
+    </div>
 
-    <!-- Form for tracking user with passcode -->
-    <form id="trackingForm">
-        <label for="trackUsername">Enter Username to Track:</label><br>
-        <input type="text" id="trackUsername" name="trackUsername" required><br>
-        <label for="trackPasscode">Enter Passcode:</label><br>
-        <input type="password" id="trackPasscode" name="trackPasscode" required><br>
-        <button type="submit">Track User</button>
-    </form>
+    <!-- Tracking Interface -->
+    <div id="tracking-container" class="container" style="display:none;">
+        <h2>Track User</h2>
+        <input type="text" id="track-username" placeholder="Enter username to track" />
+        <input type="password" id="track-password" placeholder="Enter passcode" />
+        <button id="track-button">Track User</button>
+    </div>
 
+    <!-- Map Display -->
     <div id="map"></div>
-    <div id="response"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        let map, userMarker, trackingMarker;
-        const apiBaseUrl = 'http://localhost:3000'; // Update this if your backend is hosted elsewhere
+        let map, marker, watchId;
+        const apiUrl = 'http://localhost:3000';
 
         function initMap() {
             map = L.map('map').setView([51.505, -0.09], 13);
@@ -83,30 +75,39 @@
             }).addTo(map);
         }
 
+        initMap();
+
+        document.getElementById('login-button').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Normally, you would authenticate the user here, but for simplicity,
+            // we'll assume successful login if both fields are filled
+            if (username && password) {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('tracking-container').style.display = 'block';
+
+                startTracking(username);
+            }
+        });
+
         function startTracking(username) {
             if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(position => {
+                watchId = navigator.geolocation.watchPosition(position => {
                     const pos = [position.coords.latitude, position.coords.longitude];
-                    if (!userMarker) {
-                        userMarker = L.marker(pos).addTo(map);
+                    if (!marker) {
+                        marker = L.marker(pos).addTo(map);
                     } else {
-                        userMarker.setLatLng(pos); // Update position
+                        marker.setLatLng(pos); // Update position
                     }
                     map.setView(pos);
 
-                    // Send the location to the server
-                    fetch(`${apiBaseUrl}/startTracking`, {
+                    // Send location to server
+                    fetch(`${apiUrl}/startTracking`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, latitude: pos[0], longitude: pos[1] })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.message);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                    }).catch(console.error);
                 }, error => {
                     console.error(error);
                 }, {
@@ -119,46 +120,31 @@
             }
         }
 
-        function trackUser(username, passcode) {
-            fetch(`${apiBaseUrl}/trackUser`, {
+        document.getElementById('track-button').addEventListener('click', () => {
+            const trackUsername = document.getElementById('track-username').value;
+            const trackPassword = document.getElementById('track-password').value;
+
+            fetch(`${apiUrl}/trackUser`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, passcode })
+                body: JSON.stringify({ username: trackUsername, passcode: trackPassword })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.location) {
-                    const location = data.location;
-                    if (!trackingMarker) {
-                        trackingMarker = L.marker([location.latitude, location.longitude]).addTo(map);
+                    const pos = [data.location.latitude, data.location.longitude];
+                    map.setView(pos);
+                    if (!marker) {
+                        marker = L.marker(pos).addTo(map);
                     } else {
-                        trackingMarker.setLatLng([location.latitude, location.longitude]); // Update position
+                        marker.setLatLng(pos); // Update position
                     }
-                    map.setView([location.latitude, location.longitude]);
-                    document.getElementById('response').innerHTML = `User ${username} is at latitude ${location.latitude}, longitude ${location.longitude}.`;
                 } else {
-                    document.getElementById('response').innerHTML = data.error;
+                    alert('User not found or invalid passcode');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-
-        document.getElementById('usernameForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            startTracking(username);
+            .catch(console.error);
         });
-
-        document.getElementById('trackingForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const trackUsername = document.getElementById('trackUsername').value;
-            const trackPasscode = document.getElementById('trackPasscode').value;
-            trackUser(trackUsername, trackPasscode);
-        });
-
-        initMap();
     </script>
 </body>
 </html>
