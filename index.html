@@ -81,8 +81,7 @@
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
             
-            // Normally, you would authenticate the user here, but for simplicity,
-            // we'll assume successful login if both fields are filled
+            // Normally, you would authenticate the user here
             if (username && password) {
                 document.getElementById('login-container').style.display = 'none';
                 document.getElementById('tracking-container').style.display = 'block';
@@ -103,7 +102,7 @@
                     map.setView(pos);
 
                     // Send location to server
-                    fetch(`${apiUrl}/startTracking`, {
+                    fetch(`${apiUrl}/updateLocation`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, latitude: pos[0], longitude: pos[1] })
