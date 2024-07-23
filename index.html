@@ -50,8 +50,15 @@
 <body>
     <h1>Real-Time Location Tracker</h1>
 
+    <!-- Main Menu -->
+    <div id="main-menu" class="container">
+        <h2>Welcome</h2>
+        <button id="new-registration-button">New Login Registration</button>
+        <button id="reset-password-button">Reset Password</button>
+    </div>
+
     <!-- Registration Form -->
-    <div id="registration-container" class="container">
+    <div id="registration-container" class="container hidden">
         <h2>Register</h2>
         <div class="form-group">
             <input type="text" id="register-username" placeholder="Enter username" />
@@ -60,6 +67,17 @@
             <input type="password" id="register-password" placeholder="Enter password" />
         </div>
         <button id="register-button">Register</button>
+        <div id="registration-status" class="hidden"></div>
+    </div>
+
+    <!-- Password Reset Form -->
+    <div id="reset-password-container" class="container hidden">
+        <h2>Reset Password</h2>
+        <div class="form-group">
+            <input type="text" id="reset-username" placeholder="Enter username" />
+        </div>
+        <button id="reset-password-request-button">Request Password Reset</button>
+        <div id="reset-status" class="hidden"></div>
     </div>
 
     <!-- Login Form -->
@@ -99,28 +117,6 @@
     <!-- Map Display -->
     <div id="map"></div>
 
-    <div class="container">
-        <h2>Features</h2>
-        <ul>
-            <li>Real-Time GPS location*</li>
-            <li>Geo, time-tagged attendance</li>
-            <li>Location specific attendance</li>
-            <li>Distance traveled calculation</li>
-            <li>Daily visit logs</li>
-            <li>Visit duration capturing</li>
-            <li>Digital sales order booking</li>
-            <li>Share order detail via WhatsApp</li>
-            <li>Tag client's GPS location</li>
-            <li>Geo-tagged images as proof of location</li>
-            <li>Add new client data with GPS info</li>
-            <li>Add images to custom forms</li>
-            <li>Images taken through the app can be sent</li>
-            <li>Send communication via Notifications</li>
-            <li>Auto reminder if GPS, Internet is off</li>
-            <li>Feed expenses with pic of bill</li>
-        </ul>
-    </div>
-
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         let map, marker, watchId;
@@ -135,6 +131,19 @@
 
         initMap();
 
+        // Show registration form
+        document.getElementById('new-registration-button').addEventListener('click', () => {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('registration-container').classList.remove('hidden');
+        });
+
+        // Show reset password form
+        document.getElementById('reset-password-button').addEventListener('click', () => {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('reset-password-container').classList.remove('hidden');
+        });
+
+        // Register new user
         document.getElementById('register-button').addEventListener('click', () => {
             const username = document.getElementById('register-username').value;
             const password = document.getElementById('register-password').value;
@@ -146,7 +155,8 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);
+                document.getElementById('registration-status').innerText = data.message;
+                document.getElementById('registration-status').classList.remove('hidden');
                 if (data.message === 'User registered successfully') {
                     document.getElementById('registration-container').classList.add('hidden');
                     document.getElementById('login-container').classList.remove('hidden');
@@ -155,6 +165,24 @@
             .catch(console.error);
         });
 
+        // Request password reset
+        document.getElementById('reset-password-request-button').addEventListener('click', () => {
+            const username = document.getElementById('reset-username').value;
+
+            fetch(`${apiUrl}/resetPassword`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('reset-status').innerText = data.message;
+                document.getElementById('reset-status').classList.remove('hidden');
+            })
+            .catch(console.error);
+        });
+
+        // Login user
         document.getElementById('login-button').addEventListener('click', () => {
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
@@ -167,7 +195,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message === 'Login successful') {
-                    alert(data.message);
                     document.getElementById('login-container').classList.add('hidden');
                     if (data.role === 'admin') {
                         document.getElementById('admin-container').classList.remove('hidden');
