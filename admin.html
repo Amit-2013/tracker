@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Real-Time Location Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #location-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #location-list li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    <button id="view-all-locations-button">View All User Locations</button>
+    <div id="all-locations">
+        <h2>All User Locations</h2>
+        <ul id="location-list"></ul>
+    </div>
+    <script>
+        document.getElementById('view-all-locations-button').addEventListener('click', () => {
+            const adminUsername = prompt('Enter admin username:');
+            const adminPassword = prompt('Enter admin password:');
+
+            fetch('https://trackerbackend-n7sh.onrender.com/admin/getAllLocations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: adminUsername, password: adminPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const locationList = document.getElementById('location-list');
+                locationList.innerHTML = ''; // Clear the list
+
+                for (const user in data) {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${user}: ${data[user].latitude}, ${data[user].longitude}`;
+                    locationList.appendChild(listItem);
+                }
+            })
+            .catch(console.error);
+        });
+    </script>
+</body>
+</html>
