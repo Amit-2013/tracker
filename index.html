@@ -3,22 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Location Tracker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Main Menu - Real-Time Location Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
             text-align: center;
-        }
-        h1 {
-            color: #333;
-        }
-        #map {
-            width: 100%;
-            height: 500px;
-            margin-bottom: 20px;
+            margin: 20px;
         }
         button {
             background-color: #4CAF50;
@@ -36,152 +26,12 @@
         button:hover {
             background-color: #45a049;
         }
-        #adminArea, #loginArea {
-            display: none;
-        }
     </style>
 </head>
 <body>
     <h1>Real-Time Location Tracker</h1>
-    
-    <!-- User Login -->
-    <div id="loginArea">
-        <h2>User Login</h2>
-        <input type="text" id="username" placeholder="Enter Username">
-        <button id="startTracking">Start Tracking</button>
-        <div id="trackingArea">
-            <div>Username: <span id="trackingUsername"></span></div>
-            <button id="stopTracking">Stop Tracking</button>
-        </div>
-    </div>
-
-    <!-- Admin Login -->
-    <div id="adminLoginArea">
-        <h2>Admin Login</h2>
-        <input type="text" id="adminUsername" placeholder="Admin Username">
-        <input type="password" id="adminPassword" placeholder="Admin Password">
-        <button id="adminLogin">Login</button>
-    </div>
-
-    <!-- Admin Area -->
-    <div id="adminArea">
-        <h2>Admin Dashboard</h2>
-        <h3>Track Users</h3>
-        <input type="text" id="trackUsername" placeholder="Enter Username to Track">
-        <button id="trackUser">Track User</button>
-        <div id="userLocation"></div>
-        <h3>All Users</h3>
-        <ul id="userList"></ul>
-    </div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        let map, marker, watchId, currentUser;
-        let adminToken = '';
-
-        function initMap() {
-            map = L.map('map').setView([51.505, -0.09], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-        }
-
-        initMap();
-
-        document.getElementById('startTracking').addEventListener('click', () => {
-            currentUser = document.getElementById('username').value;
-            if (navigator.geolocation) {
-                watchId = navigator.geolocation.watchPosition(position => {
-                    const pos = [position.coords.latitude, position.coords.longitude];
-                    if (!marker) {
-                        marker = L.marker(pos).addTo(map);
-                    } else {
-                        marker.setLatLng(pos); // Update position
-                    }
-                    map.setView(pos);
-                    
-                    // Send location to server
-                    fetch('https://trackerbackend-n7sh.onrender.com/updateLocation', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: currentUser, location: pos })
-                    });
-                }, error => {
-                    console.error(error);
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        });
-
-        document.getElementById('stopTracking').addEventListener('click', () => {
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-        });
-
-        // Admin login
-        document.getElementById('adminLogin').addEventListener('click', () => {
-            const username = document.getElementById('adminUsername').value;
-            const password = document.getElementById('adminPassword').value;
-            fetch('https://trackerbackend-n7sh.onrender.com/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.token) {
-                    adminToken = data.token;
-                    document.getElementById('adminLoginArea').style.display = 'none';
-                    document.getElementById('adminArea').style.display = 'block';
-                    loadUsers();
-                } else {
-                    alert('Invalid admin credentials');
-                }
-            });
-        });
-
-        // Load users
-        function loadUsers() {
-            fetch('https://trackerbackend-n7sh.onrender.com/admin/users', {
-                method: 'GET',
-                headers: { 'Authorization': adminToken }
-            })
-            .then(response => response.json())
-            .then(users => {
-                const userList = document.getElementById('userList');
-                userList.innerHTML = '';
-                users.forEach(user => {
-                    const li = document.createElement('li');
-                    li.textContent = user.username;
-                    userList.appendChild(li);
-                });
-            });
-        }
-
-        // Track user
-        document.getElementById('trackUser').addEventListener('click', () => {
-            const username = document.getElementById('trackUsername').value;
-            fetch(`https://trackerbackend-n7sh.onrender.com/admin/track/${username}`, {
-                method: 'GET',
-                headers: { 'Authorization': adminToken }
-            })
-            .then(response => response.json())
-            .then(location => {
-                if (location) {
-                    const pos = [location.latitude, location.longitude];
-                    map.setView(pos);
-                    marker.setLatLng(pos); // Update position
-                } else {
-                    alert('User not found');
-                }
-            });
-        });
-    </script>
+    <h2>Welcome</h2>
+    <button onclick="window.location.href='register.html'">New Login Registration</button>
+    <button onclick="window.location.href='login.html'">Login</button>
 </body>
 </html>
