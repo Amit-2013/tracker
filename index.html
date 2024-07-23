@@ -113,13 +113,24 @@
         document.getElementById('login-button').addEventListener('click', () => {
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-            
-            if (username && password) {
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('tracking-container').style.display = 'block';
 
-                startTracking(username);
-            }
+            fetch(`${apiUrl}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Login successful') {
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('tracking-container').style.display = 'block';
+
+                    startTracking(username);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(console.error);
         });
 
         function startTracking(username) {
