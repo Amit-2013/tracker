@@ -42,12 +42,15 @@
         .form-group {
             margin-bottom: 10px;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>Real-Time Location Tracker</h1>
 
-    <!-- Login and Tracking Form -->
+    <!-- Login Form -->
     <div id="login-container" class="container">
         <h2>Login</h2>
         <div class="form-group">
@@ -59,8 +62,8 @@
         <button id="login-button">Login</button>
     </div>
 
-    <!-- Tracking Interface -->
-    <div id="tracking-container" class="container" style="display:none;">
+    <!-- Tracking Interface for Users -->
+    <div id="tracking-container" class="container hidden">
         <h2>Track User</h2>
         <div class="form-group">
             <input type="text" id="track-username" placeholder="Enter username to track" />
@@ -69,6 +72,16 @@
             <input type="password" id="track-password" placeholder="Enter passcode" />
         </div>
         <button id="track-button">Track User</button>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="admin-container" class="container hidden">
+        <h2>Admin Panel</h2>
+        <button id="view-all-locations-button">View All User Locations</button>
+        <div id="all-locations" class="hidden">
+            <h3>All User Locations</h3>
+            <ul id="location-list"></ul>
+        </div>
     </div>
 
     <!-- Map Display -->
@@ -122,10 +135,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message === 'Login successful') {
-                    document.getElementById('login-container').style.display = 'none';
-                    document.getElementById('tracking-container').style.display = 'block';
+                    document.getElementById('login-container').classList.add('hidden');
 
-                    startTracking(username);
+                    if (data.role === 'admin') {
+                        document.getElementById('admin-container').classList.remove('hidden');
+                    } else {
+                        document.getElementById('tracking-container').classList.remove('hidden');
+                        startTracking(username);
+                    }
                 } else {
                     alert(data.message);
                 }
@@ -175,15 +192,40 @@
             .then(data => {
                 if (data.location) {
                     const pos = [data.location.latitude, data.location.longitude];
-                    map.setView(pos);
                     if (!marker) {
                         marker = L.marker(pos).addTo(map);
                     } else {
                         marker.setLatLng(pos); // Update position
                     }
+                    map.setView(pos);
                 } else {
-                    alert('User not found or invalid passcode');
+                    alert(data.message);
                 }
+            })
+            .catch(console.error);
+        });
+
+        document.getElementById('view-all-locations-button').addEventListener('click', () => {
+            const adminUsername = document.getElementById('login-username').value;
+            const adminPassword = document.getElementById('login-password').value;
+
+            fetch(`${apiUrl}/admin/getAllLocations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: adminUsername, password: adminPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const locationList = document.getElementById('location-list');
+                locationList.innerHTML = ''; // Clear the list
+
+                for (const user in data) {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${user}: ${data[user].latitude}, ${data[user].longitude}`;
+                    locationList.appendChild(listItem);
+                }
+
+                document.getElementById('all-locations').classList.remove('hidden');
             })
             .catch(console.error);
         });
