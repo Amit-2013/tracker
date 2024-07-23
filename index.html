@@ -39,6 +39,9 @@
         .container {
             margin: 20px;
         }
+        .form-group {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -47,21 +50,51 @@
     <!-- Login and Tracking Form -->
     <div id="login-container" class="container">
         <h2>Login</h2>
-        <input type="text" id="login-username" placeholder="Enter username" />
-        <input type="password" id="login-password" placeholder="Enter password" />
+        <div class="form-group">
+            <input type="text" id="login-username" placeholder="Enter username" />
+        </div>
+        <div class="form-group">
+            <input type="password" id="login-password" placeholder="Enter password" />
+        </div>
         <button id="login-button">Login</button>
     </div>
 
     <!-- Tracking Interface -->
     <div id="tracking-container" class="container" style="display:none;">
         <h2>Track User</h2>
-        <input type="text" id="track-username" placeholder="Enter username to track" />
-        <input type="password" id="track-password" placeholder="Enter passcode" />
+        <div class="form-group">
+            <input type="text" id="track-username" placeholder="Enter username to track" />
+        </div>
+        <div class="form-group">
+            <input type="password" id="track-password" placeholder="Enter passcode" />
+        </div>
         <button id="track-button">Track User</button>
     </div>
 
     <!-- Map Display -->
     <div id="map"></div>
+
+    <div class="container">
+        <h2>Features</h2>
+        <ul>
+            <li>Real-Time GPS location*</li>
+            <li>Geo, time-tagged attendance</li>
+            <li>Location specific attendance</li>
+            <li>Distance traveled calculation</li>
+            <li>Daily visit logs</li>
+            <li>Visit duration capturing</li>
+            <li>Digital sales order booking</li>
+            <li>Share order detail via WhatsApp</li>
+            <li>Tag client's GPS location</li>
+            <li>Geo-tagged images as proof of location</li>
+            <li>Add new client data with GPS info</li>
+            <li>Add images to custom forms</li>
+            <li>Images taken through the app can be sent</li>
+            <li>Send communication via Notifications</li>
+            <li>Auto reminder if GPS, Internet is off</li>
+            <li>Feed expenses with pic of bill</li>
+        </ul>
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -81,7 +114,6 @@
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
             
-            // Normally, you would authenticate the user here
             if (username && password) {
                 document.getElementById('login-container').style.display = 'none';
                 document.getElementById('tracking-container').style.display = 'block';
