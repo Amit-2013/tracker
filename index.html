@@ -36,91 +36,48 @@
         button:hover {
             background-color: #45a049;
         }
-        .container {
-            margin: 20px;
-        }
-        .form-group {
-            margin-bottom: 10px;
-        }
-        .hidden {
+        #adminArea, #loginArea {
             display: none;
         }
     </style>
 </head>
 <body>
     <h1>Real-Time Location Tracker</h1>
-
-    <!-- Main Menu -->
-    <div id="main-menu" class="container">
-        <h2>Welcome</h2>
-        <button id="new-registration-button">New Login Registration</button>
-        <button id="reset-password-button">Reset Password</button>
-    </div>
-
-    <!-- Registration Form -->
-    <div id="registration-container" class="container hidden">
-        <h2>Register</h2>
-        <div class="form-group">
-            <input type="text" id="register-username" placeholder="Enter username" />
-        </div>
-        <div class="form-group">
-            <input type="password" id="register-password" placeholder="Enter password" />
-        </div>
-        <button id="register-button">Register</button>
-        <div id="registration-status" class="hidden"></div>
-    </div>
-
-    <!-- Password Reset Form -->
-    <div id="reset-password-container" class="container hidden">
-        <h2>Reset Password</h2>
-        <div class="form-group">
-            <input type="text" id="reset-username" placeholder="Enter username" />
-        </div>
-        <button id="reset-password-request-button">Request Password Reset</button>
-        <div id="reset-status" class="hidden"></div>
-    </div>
-
-    <!-- Login Form -->
-    <div id="login-container" class="container hidden">
-        <h2>Login</h2>
-        <div class="form-group">
-            <input type="text" id="login-username" placeholder="Enter username" />
-        </div>
-        <div class="form-group">
-            <input type="password" id="login-password" placeholder="Enter password" />
-        </div>
-        <button id="login-button">Login</button>
-    </div>
-
-    <!-- Tracking Interface for Users -->
-    <div id="tracking-container" class="container hidden">
-        <h2>Track User</h2>
-        <div class="form-group">
-            <input type="text" id="track-username" placeholder="Enter username to track" />
-        </div>
-        <div class="form-group">
-            <input type="password" id="track-password" placeholder="Enter passcode" />
-        </div>
-        <button id="track-button">Track User</button>
-    </div>
-
-    <!-- Admin Interface -->
-    <div id="admin-container" class="container hidden">
-        <h2>Admin Panel</h2>
-        <button id="view-all-locations-button">View All User Locations</button>
-        <div id="all-locations" class="hidden">
-            <h3>All User Locations</h3>
-            <ul id="location-list"></ul>
+    
+    <!-- User Login -->
+    <div id="loginArea">
+        <h2>User Login</h2>
+        <input type="text" id="username" placeholder="Enter Username">
+        <button id="startTracking">Start Tracking</button>
+        <div id="trackingArea">
+            <div>Username: <span id="trackingUsername"></span></div>
+            <button id="stopTracking">Stop Tracking</button>
         </div>
     </div>
 
-    <!-- Map Display -->
-    <div id="map"></div>
+    <!-- Admin Login -->
+    <div id="adminLoginArea">
+        <h2>Admin Login</h2>
+        <input type="text" id="adminUsername" placeholder="Admin Username">
+        <input type="password" id="adminPassword" placeholder="Admin Password">
+        <button id="adminLogin">Login</button>
+    </div>
+
+    <!-- Admin Area -->
+    <div id="adminArea">
+        <h2>Admin Dashboard</h2>
+        <h3>Track Users</h3>
+        <input type="text" id="trackUsername" placeholder="Enter Username to Track">
+        <button id="trackUser">Track User</button>
+        <div id="userLocation"></div>
+        <h3>All Users</h3>
+        <ul id="userList"></ul>
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        let map, marker, watchId;
-        const apiUrl = 'https://trackerbackend-n7sh.onrender.com';
+        let map, marker, watchId, currentUser;
+        let adminToken = '';
 
         function initMap() {
             map = L.map('map').setView([51.505, -0.09], 13);
@@ -131,101 +88,24 @@
 
         initMap();
 
-        // Show registration form
-        document.getElementById('new-registration-button').addEventListener('click', () => {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('registration-container').classList.remove('hidden');
-        });
-
-        // Show reset password form
-        document.getElementById('reset-password-button').addEventListener('click', () => {
-            document.getElementById('main-menu').classList.add('hidden');
-            document.getElementById('reset-password-container').classList.remove('hidden');
-        });
-
-        // Register new user
-        document.getElementById('register-button').addEventListener('click', () => {
-            const username = document.getElementById('register-username').value;
-            const password = document.getElementById('register-password').value;
-
-            fetch(`${apiUrl}/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('registration-status').innerText = data.message;
-                document.getElementById('registration-status').classList.remove('hidden');
-                if (data.message === 'User registered successfully') {
-                    document.getElementById('registration-container').classList.add('hidden');
-                    document.getElementById('login-container').classList.remove('hidden');
-                }
-            })
-            .catch(console.error);
-        });
-
-        // Request password reset
-        document.getElementById('reset-password-request-button').addEventListener('click', () => {
-            const username = document.getElementById('reset-username').value;
-
-            fetch(`${apiUrl}/resetPassword`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('reset-status').innerText = data.message;
-                document.getElementById('reset-status').classList.remove('hidden');
-            })
-            .catch(console.error);
-        });
-
-        // Login user
-        document.getElementById('login-button').addEventListener('click', () => {
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
-
-            fetch(`${apiUrl}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Login successful') {
-                    document.getElementById('login-container').classList.add('hidden');
-                    if (data.role === 'admin') {
-                        document.getElementById('admin-container').classList.remove('hidden');
-                    } else {
-                        document.getElementById('tracking-container').classList.remove('hidden');
-                        startTracking(username);
-                    }
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(console.error);
-        });
-
-        function startTracking(username) {
+        document.getElementById('startTracking').addEventListener('click', () => {
+            currentUser = document.getElementById('username').value;
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(position => {
-                    const { latitude, longitude } = position.coords;
-                    const pos = [latitude, longitude];
+                    const pos = [position.coords.latitude, position.coords.longitude];
                     if (!marker) {
                         marker = L.marker(pos).addTo(map);
                     } else {
-                        marker.setLatLng(pos);
+                        marker.setLatLng(pos); // Update position
                     }
                     map.setView(pos);
-                    fetch(`${apiUrl}/updateLocation`, {
+                    
+                    // Send location to server
+                    fetch('https://trackerbackend-n7sh.onrender.com/updateLocation', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, latitude, longitude })
-                    })
-                    .catch(console.error);
+                        body: JSON.stringify({ username: currentUser, location: pos })
+                    });
                 }, error => {
                     console.error(error);
                 }, {
@@ -236,57 +116,71 @@
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
-        }
-
-        document.getElementById('track-button').addEventListener('click', () => {
-            const trackUsername = document.getElementById('track-username').value;
-            const trackPassword = document.getElementById('track-password').value;
-
-            fetch(`${apiUrl}/trackUser`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: trackUsername, passcode: trackPassword })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.location) {
-                    const pos = [data.location.latitude, data.location.longitude];
-                    if (!marker) {
-                        marker = L.marker(pos).addTo(map);
-                    } else {
-                        marker.setLatLng(pos);
-                    }
-                    map.setView(pos);
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(console.error);
         });
 
-        document.getElementById('view-all-locations-button').addEventListener('click', () => {
-            const adminUsername = document.getElementById('login-username').value;
-            const adminPassword = document.getElementById('login-password').value;
+        document.getElementById('stopTracking').addEventListener('click', () => {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+        });
 
-            fetch(`${apiUrl}/admin/getAllLocations`, {
+        // Admin login
+        document.getElementById('adminLogin').addEventListener('click', () => {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            fetch('https://trackerbackend-n7sh.onrender.com/admin/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: adminUsername, password: adminPassword })
+                body: JSON.stringify({ username, password })
             })
             .then(response => response.json())
             .then(data => {
-                const locationList = document.getElementById('location-list');
-                locationList.innerHTML = ''; // Clear the list
-
-                for (const user in data) {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${user}: ${data[user].latitude}, ${data[user].longitude}`;
-                    locationList.appendChild(listItem);
+                if (data.token) {
+                    adminToken = data.token;
+                    document.getElementById('adminLoginArea').style.display = 'none';
+                    document.getElementById('adminArea').style.display = 'block';
+                    loadUsers();
+                } else {
+                    alert('Invalid admin credentials');
                 }
+            });
+        });
 
-                document.getElementById('all-locations').classList.remove('hidden');
+        // Load users
+        function loadUsers() {
+            fetch('https://trackerbackend-n7sh.onrender.com/admin/users', {
+                method: 'GET',
+                headers: { 'Authorization': adminToken }
             })
-            .catch(console.error);
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.textContent = user.username;
+                    userList.appendChild(li);
+                });
+            });
+        }
+
+        // Track user
+        document.getElementById('trackUser').addEventListener('click', () => {
+            const username = document.getElementById('trackUsername').value;
+            fetch(`https://trackerbackend-n7sh.onrender.com/admin/track/${username}`, {
+                method: 'GET',
+                headers: { 'Authorization': adminToken }
+            })
+            .then(response => response.json())
+            .then(location => {
+                if (location) {
+                    const pos = [location.latitude, location.longitude];
+                    map.setView(pos);
+                    marker.setLatLng(pos); // Update position
+                } else {
+                    alert('User not found');
+                }
+            });
         });
     </script>
 </body>
