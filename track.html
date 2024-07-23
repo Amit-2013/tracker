@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track User - Real-Time Location Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Track User</h1>
+    <div class="form-group">
+        <input type="text" id="track-username" placeholder="Enter username to track" />
+    </div>
+    <div class="form-group">
+        <input type="password" id="track-password" placeholder="Enter passcode" />
+    </div>
+    <button id="track-button">Track User</button>
+    <div id="track-status"></div>
+    <div id="map" style="height: 500px;"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        let map, marker;
+
+        function initMap() {
+            map = L.map('map').setView([51.505, -0.09], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+
+        initMap();
+
+        document.getElementById('track-button').addEventListener('click', () => {
+            const trackUsername = document.getElementById('track-username').value;
+            const trackPassword = document.getElementById('track-password').value;
+
+            fetch('https://trackerbackend-n7sh.onrender.com/trackUser', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: trackUsername, passcode: trackPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.location) {
+                    const pos = [data.location.latitude, data.location.longitude];
+                    if (!marker) {
+                        marker = L.marker(pos).addTo(map);
+                    } else {
+                        marker.setLatLng(pos);
+                    }
+                    map.setView(pos);
+                } else {
+                    document.getElementById('track-status').innerText = data.message;
+                }
+            })
+            .catch(console.error);
+        });
+    </script>
+</body>
+</html>
